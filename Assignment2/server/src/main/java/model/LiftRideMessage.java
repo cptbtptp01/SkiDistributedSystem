@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class LiftRideMessage {
+
   private final LiftRide liftRide;
   private final int resortId;
   private final String seasonId;

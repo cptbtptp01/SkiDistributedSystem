@@ -15,11 +15,20 @@ import model.ResponseMsg;
 import service.RabbitMQService;
 import util.RequestParser;
 
+/**
+ * SkierServlet handles HTTP requests related to skiers and lift rides.
+ * This servlet uses RabbitMQ for messaging and allows clients to submit
+ * lift ride data via HTTP POST requests and retrieve information via GET requests.
+ */
 @WebServlet(value = "/skiers/*")
 public class SkierServlet extends HttpServlet {
-  private RabbitMQService rabbitMQService;
-  private Gson gson = new Gson();
 
+  private RabbitMQService rabbitMQService;
+  private final Gson gson = new Gson(); // thread safe
+
+  /**
+   * Initializes the servlet and creates a RabbitMQ service instance.
+   */
   @Override
   public void init() throws ServletException {
     super.init();
@@ -30,12 +39,23 @@ public class SkierServlet extends HttpServlet {
     }
   }
 
+  /**
+   * Cleans up resources by closing the RabbitMQ connection when the servlet is destroyed.
+   */
   @Override
   public void destroy() {
     rabbitMQService.close(); // Close the RabbitMQ connection
     super.destroy();
   }
 
+  /**
+   * Handles GET requests for skier-related resources.
+   *
+   * @param req The HttpServletRequest object.
+   * @param res The HttpServletResponse object.
+   * @throws ServletException If an error occurs during the request.
+   * @throws IOException If an input or output error occurs.
+   */
   protected void doGet(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
     setupResponse(res);
@@ -60,10 +80,19 @@ public class SkierServlet extends HttpServlet {
       // TODO: process url params in `urlParts`
       sendSuccessResponse(res, HttpServletResponse.SC_OK, "Valid URL GET");
     } catch (Exception e) {
-      sendErrorResponse(res, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server Error: " + e.getMessage());
+      sendErrorResponse(res, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+          "Server Error: " + e.getMessage());
     }
   }
 
+  /**
+   * Handles POST requests to submit lift ride data.
+   *
+   * @param req The HttpServletRequest object.
+   * @param res The HttpServletResponse object.
+   * @throws ServletException If an error occurs during the request.
+   * @throws IOException If an input or output error occurs.
+   */
   protected void doPost(HttpServletRequest req, HttpServletResponse res)
       throws ServletException, IOException {
     Connection connection = null;
@@ -115,17 +144,25 @@ public class SkierServlet extends HttpServlet {
         }
 
       } catch (Exception e) {
-        sendErrorResponse(res, HttpServletResponse.SC_BAD_REQUEST, "Error processing request: " + e.getMessage());
+        sendErrorResponse(res, HttpServletResponse.SC_BAD_REQUEST,
+            "Error processing request: " + e.getMessage());
       }
 
     } catch (Exception e) {
       e.printStackTrace();
-      sendErrorResponse(res, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Server Error: " + e.getMessage());
+      sendErrorResponse(res, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+          "Server Error: " + e.getMessage());
     } finally {
-      if (channel != null) rabbitMQService.returnChannel(connection, channel);
-      if (connection != null) rabbitMQService.returnConnection(connection);
+      if (channel != null) {
+        rabbitMQService.returnChannel(connection, channel);
+      }
+      if (connection != null) {
+        rabbitMQService.returnConnection(connection);
+      }
     }
   }
+
+  // below are helper methods
 
   private void setupResponse(HttpServletResponse res) {
     res.setContentType("application/json");

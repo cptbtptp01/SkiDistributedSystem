@@ -8,6 +8,7 @@ import model.LiftRide;
 import model.LiftRideMessage;
 
 public class RequestParser {
+
   private static final Gson gson = new Gson();
 
   public static String readRequestBody(HttpServletRequest request) throws IOException {
